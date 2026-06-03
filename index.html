@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIBE JUNINA – Desafio dos 10 Segundos</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Lilita+One&family=Patrick+Hand+SC&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --red:    #E8191A;
+    --green:  #1DB83A;
+    --blue:   #1565C0;
+    --yellow: #F9C200;
+    --black:  #111111;
+    --white:  #FAFAFA;
+    --cream:  #FFF8E7;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: var(--cream);
+    font-family: 'Fredoka One', cursive;
+    user-select: none;
+  }
+
+  /* ========== BACKGROUND ========== */
+  #bg {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      repeating-linear-gradient(45deg, rgba(249,194,0,.08) 0px, rgba(249,194,0,.08) 2px, transparent 2px, transparent 20px),
+      repeating-linear-gradient(-45deg, rgba(229,57,53,.06) 0px, rgba(229,57,53,.06) 2px, transparent 2px, transparent 20px),
+      var(--cream);
+  }
+
+  /* ========== BANDEIRINHAS ========== */
+  .bandeiras {
+    position: fixed; top: 0; left: 0; width: 100%;
+    z-index: 10; pointer-events: none;
+    display: flex; align-items: flex-start;
+  }
+  .bandeiras svg { width: 100%; height: 80px; }
+
+  .bandeiras-bottom {
+    top: auto; bottom: 0;
+    transform: rotate(180deg);
+  }
+
+  /* ========== ESTRELAS DECORATIVAS ========== */
+  .star-deco {
+    position: fixed; pointer-events: none; z-index: 5;
+    font-size: 2rem; animation: twinkle 2s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%,100%{opacity:1;transform:scale(1) rotate(0deg);}
+    50%{opacity:.4;transform:scale(1.3) rotate(20deg);}
+  }
+
+  /* ========== LAYOUT PRINCIPAL ========== */
+  #app {
+    position: relative; z-index: 20;
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: clamp(8px, 1.5vh, 20px);
+    padding: 90px 20px 80px;
+  }
+
+  /* ========== LOGO TEXT ========== */
+  .logo-text {
+    display: flex; flex-direction: column; align-items: center; line-height: 1;
+    filter: drop-shadow(3px 3px 0 var(--black));
+    animation: logoFloat 3s ease-in-out infinite;
+  }
+  @keyframes logoFloat {
+    0%,100%{transform:translateY(0);} 50%{transform:translateY(-6px);}
+  }
+  .logo-text .vibe {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+    letter-spacing: 4px;
+  }
+  .logo-text .junina {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(2.2rem, 6vw, 4.8rem);
+    letter-spacing: 6px;
+    margin-top: -8px;
+  }
+  /* colored letters */
+  .v{color:var(--green);}
+  .i{color:var(--red);}
+  .b{color:var(--blue);}
+  .e{color:var(--yellow);}
+  .j{color:var(--red);}
+  .u{color:var(--yellow);}
+  .n{color:var(--green);}
+  .ii{color:var(--blue);}
+  .n2{color:var(--red);}
+  .a{color:var(--yellow);}
+  /* stroke */
+  .logo-text span { -webkit-text-stroke: 2.5px var(--black); }
+
+  /* ========== SUBTITLE ========== */
+  .subtitle {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1rem, 2.8vw, 1.8rem);
+    color: var(--black);
+    background: var(--yellow);
+    border: 3px solid var(--black);
+    border-radius: 50px;
+    padding: 6px 28px;
+    text-align: center;
+    box-shadow: 4px 4px 0 var(--black);
+    letter-spacing: 1px;
+  }
+
+  /* ========== TIMER BOX ========== */
+  #timer-box {
+    position: relative;
+    background: var(--white);
+    border: 5px solid var(--black);
+    border-radius: 28px;
+    padding: clamp(12px, 2.5vh, 30px) clamp(30px, 6vw, 80px);
+    box-shadow: 8px 8px 0 var(--black);
+    text-align: center;
+    min-width: 280px;
+    transition: background 0.2s;
+  }
+  #timer-box.running { background: #e8f5e9; }
+  #timer-box.win     { background: #fff9c4; animation: winPulse .4s ease-in-out infinite alternate; }
+  #timer-box.lose    { background: #ffebee; animation: losePulse .3s ease-in-out infinite alternate; }
+
+  @keyframes winPulse  { from{transform:scale(1);}  to{transform:scale(1.03);} }
+  @keyframes losePulse { from{transform:scale(1);}  to{transform:scale(1.02) rotate(-1deg);} }
+
+  #timer-display {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(4rem, 14vw, 10rem);
+    color: var(--black);
+    line-height: 1;
+    letter-spacing: -2px;
+    transition: color .1s;
+  }
+  #timer-display.win-color  { color: var(--green); }
+  #timer-display.lose-color { color: var(--red); }
+
+  #timer-ms {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.5rem, 4vw, 3rem);
+    color: #555;
+    margin-top: -10px;
+  }
+
+  /* ========== STATUS MESSAGE ========== */
+  #status-msg {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1.1rem, 3vw, 2rem);
+    min-height: 2.5rem;
+    text-align: center;
+    color: var(--black);
+    transition: all .2s;
+  }
+  #status-msg.win-msg  { color: var(--green); }
+  #status-msg.lose-msg { color: var(--red); }
+
+  /* ========== ENTER HINT ========== */
+  #enter-hint {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--black); color: var(--white);
+    border-radius: 50px; padding: 8px 22px;
+    font-size: clamp(.85rem, 2vw, 1.1rem);
+    box-shadow: 3px 3px 0 var(--blue);
+  }
+  .kbd {
+    background: var(--white); color: var(--black);
+    border-radius: 8px; padding: 2px 10px;
+    font-family: 'Lilita One', cursive;
+    font-size: 1em; border: 2px solid #555;
+    box-shadow: 0 3px 0 #333;
+  }
+
+  /* ========== RANKING ========== */
+  #ranking-section {
+    width: 100%;
+    max-width: 580px;
+  }
+  .ranking-title {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1rem, 2.5vw, 1.6rem);
+    text-align: center;
+    color: var(--black);
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  #ranking-list {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .rank-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--white);
+    border: 3px solid var(--black);
+    border-radius: 16px;
+    padding: 8px 16px;
+    box-shadow: 4px 4px 0 var(--black);
+    animation: rankIn .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes rankIn {
+    from{opacity:0;transform:translateX(-30px);}
+    to{opacity:1;transform:translateX(0);}
+  }
+  .rank-medal {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    min-width: 36px; text-align: center;
+  }
+  .rank-pos {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    color: var(--black); min-width: 30px;
+  }
+  .rank-name {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(.95rem, 2.2vw, 1.3rem);
+    flex: 1; color: #222;
+  }
+  .rank-time {
+    font-family: 'Patrick Hand SC', cursive;
+    font-size: clamp(.9rem, 2vw, 1.2rem);
+    color: #555;
+  }
+  .rank-winner-badge {
+    background: var(--yellow);
+    border: 2px solid var(--black);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-family: 'Lilita One', cursive;
+    font-size: .75rem;
+    color: var(--black);
+  }
+
+  /* ========== MODAL INPUT NOME ========== */
+  #modal-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,.65);
+    display: none; align-items: center; justify-content: center;
+  }
+  #modal-overlay.show { display: flex; }
+  #modal-box {
+    background: var(--cream);
+    border: 5px solid var(--black);
+< truncated lines 252-495 >
+const timerBox    = document.getElementById('timer-box');
+const statusMsg   = document.getElementById('status-msg');
+const modalOverlay= document.getElementById('modal-overlay');
+const nameInput   = document.getElementById('name-input');
+const modalTime   = document.getElementById('modal-time');
+const alarmOverlay= document.getElementById('alarm-overlay');
+const alarmText   = document.getElementById('alarm-text');
+const confettiWrap= document.getElementById('confetti-wrap');
+
+// Audio via Web Audio API
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function getAudio(){ if(!audioCtx) audioCtx=new AudioCtx(); return audioCtx; }
+
+function playBeep(freq=880, dur=0.15, type='square', vol=0.4){
+  try {
+    const ctx=getAudio();
+    const o=ctx.createOscillator();
+    const g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type=type; o.frequency.setValueAtTime(freq,ctx.currentTime);
+    g.gain.setValueAtTime(vol,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+    o.start(ctx.currentTime); o.stop(ctx.currentTime+dur+.05);
+  }catch(e){}
+}
+
+function playWinSound(){
+  const notes=[523,659,784,1047];
+  notes.forEach((n,i)=>setTimeout(()=>playBeep(n,.18,'sine',.5),i*100));
+}
+function playLoseSound(){
+  playBeep(220,.4,'sawtooth',.3);
+  setTimeout(()=>playBeep(180,.4,'sawtooth',.3),150);
+}
+function playStartSound(){ playBeep(660,.08,'square',.25); }
+function playTickSound(){ playBeep(1200,.04,'square',.15); }
+
+// ======================================================
+// RENDER TIMER
+// ======================================================
+function renderTimer(ms){
+  const secs = Math.floor(ms/1000);
+  const msPart = ms % 1000;
+  timerDisplay.textContent = String(secs).padStart(2,'0');
+  timerMs.textContent = '.' + String(msPart).padStart(3,'0');
+}
+
+// ======================================================
+// ANIMATION LOOP
+// ======================================================
+function loop(){
+  const elapsed = Date.now() - startTime;
+  renderTimer(Math.min(elapsed, 99999));
+  // color warning
+  if(elapsed >= 9000 && elapsed < 9500){
+    timerDisplay.style.color='#F9C200';
+    if(!loop._tick){ loop._tick=true; playTickSound(); }
+  } else if(elapsed >= 9500){
+    timerDisplay.style.color='#E8191A';
+  }
+  if(running) animFrame = requestAnimationFrame(loop);
+}
+
+// ======================================================
+// START
+// ======================================================
+function startTimer(){
+  running = true;
+  startTime = Date.now();
+  loop._tick = false;
+  timerDisplay.style.color = 'var(--black)';
+  timerDisplay.classList.remove('win-color','lose-color');
+  timerBox.className = 'running';
+  statusMsg.textContent = '⏱ CORRA! PARE EM 10 SEGUNDOS!';
+  statusMsg.className = '';
+  playStartSound();
+  animFrame = requestAnimationFrame(loop);
+}
+
+// ======================================================
+// STOP
+// ======================================================
+function stopTimer(){
+  running = false;
+  cancelAnimationFrame(animFrame);
+  const elapsed = Date.now() - startTime;
+  renderTimer(elapsed);
+
+  const diff = Math.abs(elapsed - TARGET);
+  const isWin = diff <= TOLERANCE;
+
+  pendingResult = { elapsed, isWin };
+
+  if(isWin){
+    timerDisplay.classList.add('win-color');
+    timerBox.className = 'win';
+    statusMsg.textContent = '🎉 EXATOS 10 SEGUNDOS! GANHOU!';
+    statusMsg.className = 'win-msg';
+    playWinSound();
+    triggerAlarm(elapsed);
+  } else {
+    timerDisplay.classList.add('lose-color');
+    timerBox.className = 'lose';
+    const over = elapsed > TARGET;
+    statusMsg.textContent = over ? `😬 Passou! Foram ${(elapsed/1000).toFixed(3)}s` : `😬 Cedo! Foram ${(elapsed/1000).toFixed(3)}s`;
+    statusMsg.className = 'lose-msg';
+    playLoseSound();
+    spawnStarParticles('❌',3);
+  }
+
+  // Always ask name for ranking
+  setTimeout(()=>openModal(isWin, elapsed), isWin ? 2600 : 800);
+}
+
+// ======================================================
+// ENTER KEY
+// ======================================================
+document.addEventListener('keydown', e=>{
+  if(e.code==='Enter' || e.key==='Enter'){
+    if(modalOverlay.classList.contains('show')) return;
+    if(!running) startTimer();
+    else stopTimer();
+  }
+});
+
+// ======================================================
+// ALARM
+// ======================================================
+function triggerAlarm(ms){
+  alarmOverlay.classList.add('show');
+  alarmText.innerHTML = `🎊 GANHOU! 🎊<br>LEVE O DOBRO!`;
+  confettiWrap.innerHTML='';
+  const colors=['#E8191A','#1DB83A','#1565C0','#F9C200'];
+  for(let i=0;i<80;i++){
+    const c=document.createElement('div');
+    c.className='confetti-piece';
+    c.style.left=Math.random()*100+'%';
+    c.style.top='-20px';
+    c.style.background=colors[Math.floor(Math.random()*4)];
+    c.style.animationDelay=(Math.random()*1)+'s';
+    c.style.animationDuration=(1.5+Math.random()*1.5)+'s';
+    c.style.borderRadius=Math.random()>.5?'50%':'2px';
+    confettiWrap.appendChild(c);
+  }
+  spawnStarParticles('🌟',12);
+  setTimeout(()=>{ alarmOverlay.classList.remove('show'); confettiWrap.innerHTML=''; },2500);
+}
+
+// ======================================================
+// STAR PARTICLES
+// ======================================================
+function spawnStarParticles(emoji,n){
+  for(let i=0;i<n;i++){
+    const s=document.createElement('div');
+    s.className='star-particle';
+    s.textContent=emoji;
+    s.style.left=(20+Math.random()*60)+'%';
+    s.style.top=(20+Math.random()*60)+'%';
+    s.style.animationDelay=(Math.random()*.5)+'s';
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),2500);
+  }
+}
+
+// ======================================================
+// MODAL
+// ======================================================
+function openModal(isWin, ms){
+  const modalTitle = document.getElementById('modal-title');
+  const modalSub   = document.getElementById('modal-sub');
+  if(isWin){
+    document.getElementById('modal-emoji').textContent='🏆';
+    modalTitle.textContent='VOCÊ GANHOU!';
+    modalSub.innerHTML=`Parou em <strong>${(ms/1000).toFixed(3)}s</strong> — EXATOS 10 SEGUNDOS!<br>Coloque seu nome no pódio:`;
+  } else {
+    document.getElementById('modal-emoji').textContent='😅';
+    modalTitle.textContent='FOI POR POUCO!';
+    modalSub.innerHTML=`Você parou em <strong>${(ms/1000).toFixed(3)}s</strong><br>Quer entrar no ranking?`;
+  }
+  nameInput.value='';
+  modalOverlay.classList.add('show');
+  setTimeout(()=>nameInput.focus(),200);
+}
+
+nameInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter') confirmName();
+});
+
+// ======================================================
+// RANKING
+// ======================================================
+let ranking = JSON.parse(localStorage.getItem('vibeJuninaRanking')||'[]');
+
+function confirmName(){
+  const name = nameInput.value.trim() || 'Anônimo';
+  if(!pendingResult) return;
+  const {elapsed, isWin} = pendingResult;
+  ranking.push({name, elapsed, isWin});
+  // Sort: winners (closest to 10s) first, then closest regardless
+  ranking.sort((a,b)=>{
+    const da=Math.abs(a.elapsed-TARGET);
+    const db=Math.abs(b.elapsed-TARGET);
+    return da-db;
+  });
+  ranking = ranking.slice(0,10);
+  localStorage.setItem('vibeJuninaRanking', JSON.stringify(ranking));
+  updateRankingUI();
+  modalOverlay.classList.remove('show');
+  pendingResult=null;
+  // Reset for next player
+  setTimeout(resetTimer, 500);
+}
+
+function updateRankingUI(){
+  const medals=['🥇','🥈','🥉'];
+  const positions=['rank-1','rank-2','rank-3'];
+  positions.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    const entry=ranking[i];
+    if(entry){
+      const diff=Math.abs(entry.elapsed-TARGET);
+      const isW=diff===0;
+      el.innerHTML=`
+        <span class="rank-medal">${medals[i]}</span>
+        <span class="rank-pos">${i+1}º</span>
+        <span class="rank-name">${escHtml(entry.name)}</span>
+        ${isW?'<span class="rank-winner-badge">🏆 GANHOU</span>':''}
+        <span class="rank-time">${(entry.elapsed/1000).toFixed(3)}s</span>
+      `;
+    }
+  });
+}
+updateRankingUI();
+
+function resetTimer(){
+  timerDisplay.textContent='00';
+  timerMs.textContent='.000';
+  timerDisplay.style.color='var(--black)';
+  timerDisplay.classList.remove('win-color','lose-color');
+  timerBox.className='';
+  statusMsg.textContent='Pressione ENTER para começar!';
+  statusMsg.className='';
+  running=false;
+}
+
+function escHtml(s){ return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>
+</body>
+</html>
